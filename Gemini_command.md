@@ -44,3 +44,21 @@ Summary:
 Automated commit by Gemini CLI.
 
 ---
+
+## Commit: dddbd4b3b910db32391af176f8e311816aea24ec
+**Date:** Sun Jan 18 19:24:16 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+Fix cpplint issues and add pre-commit hooks for linting and formatting.
+
+Summary:
+1. Fixed all cpplint warnings and errors in src/ and include/.
+2. Added .clang-format based on Google style.
+3. Added CPPLINT.cfg to manage linting rules.
+4. Updated .git/hooks/pre-commit to automatically run clang-format and cpplint.
+5. Ensured all source files adhere to the defined style and pass linting.
+
+Automated commit by Gemini CLI.
+
+---

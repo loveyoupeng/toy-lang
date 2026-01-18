@@ -90,30 +90,52 @@ class MLIRGenImpl {
   }
 
   mlir::Value getOrCreateGlobalString(Location loc, llvm::StringRef msg) {
-    mlir::OpBuilder::InsertionGuard guard(builder);
-    builder.setInsertionPointToStart(module.getBody());
-
     static int strCount = 0;
+
     std::string name = "str_" + std::to_string(strCount++);
 
     auto type = mlir::LLVM::LLVMArrayType::get(builder.getIntegerType(8),
                                                msg.size() + 1);
-    auto global = builder.create<mlir::LLVM::GlobalOp>(
-        builder.getUnknownLoc(), type,
-        /*isConstant=*/true, mlir::LLVM::Linkage::Internal, name,
-        builder.getStringAttr(msg.str() + "\00"));  // Null terminate
 
-    builder.setInsertionPointAfter(global);
+    mlir::LLVM::GlobalOp global;
+
+    {
+      mlir::OpBuilder::InsertionGuard guard(builder);
+
+      builder.setInsertionPointToStart(module.getBody());
+
+      std::string val = msg.str();
+
+      val.push_back('\0');
+
+      global = builder.create<mlir::LLVM::GlobalOp>(
+
+          builder.getUnknownLoc(),
+
+          type,
+
+          /*isConstant=*/true,
+
+          mlir::LLVM::Linkage::Internal,
+
+          name,
+
+          builder.getStringAttr(val));
+    }
 
     auto addr = builder.create<mlir::LLVM::AddressOfOp>(getLoc(loc), global);
 
     mlir::Value zero = builder.create<mlir::LLVM::ConstantOp>(
+
         getLoc(loc), builder.getIntegerType(64),
         builder.getIntegerAttr(builder.getIntegerType(64), 0));
 
     std::vector<mlir::Value> indices = {zero, zero};
+
     return builder.create<mlir::LLVM::GEPOp>(
+
         getLoc(loc), mlir::LLVM::LLVMPointerType::get(builder.getContext()),
+
         global.getType(), addr, indices);
   }
 

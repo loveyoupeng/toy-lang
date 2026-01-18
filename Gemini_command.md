@@ -118,3 +118,20 @@ Summary:
 Automated commit by Gemini CLI.
 
 ---
+
+## Commit: 239d9bedd8c0e329bbee5accd0c1e614937bd603
+**Date:** Sun Jan 18 21:35:29 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+Refactor for testability and add type checker tests.
+
+Summary:
+1. Refactored src/CMakeLists.txt to create a toy_compiler library.
+2. Updated tests/CMakeLists.txt to link against the new library.
+3. Added tests/TypeCheckerTest.cpp covering promotion, truncation, and byte isolation.
+4. Prepared project for compile_commands.json generation.
+
+Automated commit by Gemini CLI.
+
+---

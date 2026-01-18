@@ -40,43 +40,32 @@ enum Token {
   tok_as_uint32 = -35,
   tok_as_uint64 = -36,
   tok_as_float32 = -37,
-  tok_as_float64 = -38,
-  tok_as_byte = -39,
+  tok_as_float64 = -22,
+  tok_as_byte = -23,
+
+  // Builtins
+  tok_print = -24,
+  tok_println = -25,
+  tok_stderr = -26,
+
+  // Literals
+  tok_string_literal = -27,
 };
 
 class Lexer {
- public:
-  explicit Lexer(std::string content)
-      : content(std::move(content)),
-        lastChar(' '),
-        curLine(1),
-        curCol(0),
-        pos(0) {}
-
-  int gettok();
-  const std::string& getIdentifier() const {
-    return identifierStr;
-  }
-  double getNumVal() const {
-    return numVal;
-  }
-  Location getLastLoc() const {
-    return lastLoc;
-  }
-
- private:
-  std::string content;
-  int lastChar;
-  int curLine;
-  int curCol;
-  size_t pos;
   std::string identifierStr;
+  std::string stringVal;  // For string literals
   double numVal;
-  Location lastLoc;
+  char lastChar = ' ';
+  int curLine = 1;
+  int curCol = 0;
+  Location lastLoc = {1, 0};
+  const std::string source;
+  int curPos = 0;
 
-  int nextChar() {
-    if (pos >= content.size()) return EOF;
-    int c = content[pos++];
+  char nextChar() {
+    if (curPos >= source.size()) return EOF;
+    char c = source[curPos++];
     if (c == '\n') {
       curLine++;
       curCol = 0;
@@ -85,6 +74,24 @@ class Lexer {
     }
     return c;
   }
+
+ public:
+  explicit Lexer(std::string source) : source(std::move(source)) {}
+
+  std::string getIdentifier() const {
+    return identifierStr;
+  }
+  std::string getStringVal() const {
+    return stringVal;
+  }
+  double getNumVal() const {
+    return numVal;
+  }
+  Location getLastLoc() const {
+    return lastLoc;
+  }
+
+  int gettok();
 };
 
 }  // namespace toy

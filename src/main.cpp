@@ -4,10 +4,12 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "llvm/Support/raw_ostream.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
 #include "toy/AST.h"
@@ -35,6 +37,7 @@ int main(int argc, char** argv) {
   mlir::MLIRContext context;
   context.getOrLoadDialect<mlir::arith::ArithDialect>();
   context.getOrLoadDialect<mlir::func::FuncDialect>();
+  context.getOrLoadDialect<mlir::LLVM::LLVMDialect>();
 
   toy::Lexer lexer(content);
   toy::Parser parser(std::move(lexer));

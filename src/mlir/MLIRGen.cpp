@@ -3,9 +3,11 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
@@ -80,6 +82,55 @@ class MLIRGenImpl {
     if (t.isF32()) return 32;
     if (t.isF64()) return 64;
     return 0;
+  }
+
+  mlir::Location getLoc(Location loc) {
+    return mlir::FileLineColLoc::get(builder.getStringAttr("toy_source"),
+                                     loc.line, loc.col);
+  }
+
+  mlir::Value getOrCreateGlobalString(Location loc, llvm::StringRef msg) {
+    mlir::OpBuilder::InsertionGuard guard(builder);
+    builder.setInsertionPointToStart(module.getBody());
+
+    static int strCount = 0;
+    std::string name = "str_" + std::to_string(strCount++);
+
+    auto type = mlir::LLVM::LLVMArrayType::get(builder.getIntegerType(8),
+                                               msg.size() + 1);
+    auto global = builder.create<mlir::LLVM::GlobalOp>(
+        builder.getUnknownLoc(), type,
+        /*isConstant=*/true, mlir::LLVM::Linkage::Internal, name,
+        builder.getStringAttr(msg.str() + "\00"));  // Null terminate
+
+    builder.setInsertionPointAfter(global);
+
+    auto addr = builder.create<mlir::LLVM::AddressOfOp>(getLoc(loc), global);
+
+    mlir::Value zero = builder.create<mlir::LLVM::ConstantOp>(
+        getLoc(loc), builder.getIntegerType(64),
+        builder.getIntegerAttr(builder.getIntegerType(64), 0));
+
+    std::vector<mlir::Value> indices = {zero, zero};
+    return builder.create<mlir::LLVM::GEPOp>(
+        getLoc(loc), mlir::LLVM::LLVMPointerType::get(builder.getContext()),
+        global.getType(), addr, indices);
+  }
+
+  mlir::LLVM::LLVMFuncOp getPrintf() {
+    auto lookup = module.lookupSymbol<mlir::LLVM::LLVMFuncOp>("printf");
+    if (lookup) return lookup;
+
+    mlir::OpBuilder::InsertionGuard guard(builder);
+    builder.setInsertionPointToStart(module.getBody());
+
+    auto llvmI32 = builder.getIntegerType(32);
+    auto llvmPtr = mlir::LLVM::LLVMPointerType::get(builder.getContext());
+    auto llvmFnType = mlir::LLVM::LLVMFunctionType::get(llvmI32, {llvmPtr},
+                                                        /*isVarArg=*/true);
+
+    return builder.create<mlir::LLVM::LLVMFuncOp>(builder.getUnknownLoc(),
+                                                  "printf", llvmFnType);
   }
 
   mlir::Value emitCast(mlir::Value value, mlir::Type destType, Location loc,
@@ -223,6 +274,43 @@ class MLIRGenImpl {
       auto arg = codegen(*cast->getArg());
       if (!arg) return nullptr;
       return emitCast(arg, getMLIRType(cast->getDestType()), cast->loc(), true);
+    }
+
+    if (auto* strExpr = dynamic_cast<StringExprAST*>(&node)) {
+      return getOrCreateGlobalString(strExpr->loc(), strExpr->getValue());
+    }
+
+    if (auto* printExpr = dynamic_cast<PrintExprAST*>(&node)) {
+      auto printfFunc = getPrintf();
+      Location loc = printExpr->loc();
+      auto mlirLoc = getLoc(loc);
+
+      for (auto& arg : printExpr->getArgs()) {
+        if (auto* strArg = dynamic_cast<StringExprAST*>(arg.get())) {
+          auto val = codegen(*arg);
+          builder.create<mlir::LLVM::CallOp>(mlirLoc, printfFunc, val);
+        } else {
+          auto val = codegen(*arg);
+          if (!val) return nullptr;
+
+          std::string fmt;
+          if (llvm::isa<mlir::FloatType>(val.getType()))
+            fmt = "%f";
+          else
+            fmt = "%d";
+
+          auto fmtStr = getOrCreateGlobalString(loc, fmt);
+          builder.create<mlir::LLVM::CallOp>(
+              mlirLoc, printfFunc, std::vector<mlir::Value>{fmtStr, val});
+        }
+      }
+
+      if (printExpr->getIsNewLine()) {
+        auto nlStr = getOrCreateGlobalString(loc, "\n");
+        builder.create<mlir::LLVM::CallOp>(mlirLoc, printfFunc, nlStr);
+      }
+
+      return builder.create<mlir::arith::ConstantIntOp>(mlirLoc, 0, 32);
     }
 
     if (auto* bin = dynamic_cast<BinaryExprAST*>(&node)) {

@@ -48,11 +48,35 @@ int Lexer::gettok() {
         {"asuint8", tok_as_uint8},     {"asuint32", tok_as_uint32},
         {"asuint64", tok_as_uint64},   {"asfloat32", tok_as_float32},
         {"asfloat64", tok_as_float64}, {"asbyte", tok_as_byte},
+        {"print", tok_print},          {"println", tok_println},
+        {"stderr", tok_stderr},
     };
 
     if (keywordMap.count(identifierStr)) return keywordMap.at(identifierStr);
 
     return tok_identifier;
+  }
+
+  if (lastChar == '"') {
+    std::string str;
+    lastChar = nextChar();  // eat opening quote
+    while (lastChar != '"' && lastChar != EOF) {
+      if (lastChar == '\\') {
+        lastChar = nextChar();  // skip backslash
+        if (lastChar == 'n')
+          str += '\n';
+        else if (lastChar == 't')
+          str += '\t';
+        else
+          str += static_cast<char>(lastChar);
+      } else {
+        str += static_cast<char>(lastChar);
+      }
+      lastChar = nextChar();
+    }
+    lastChar = nextChar();  // eat closing quote
+    stringVal = str;
+    return tok_string_literal;
   }
 
   if (isdigit(lastChar) || lastChar == '.') {

@@ -1,0 +1,9 @@
+var a = 10;
+var b = 20;
+println("the value {a} + {b} = {a + b}");
+var pi = 3.14159;
+println("Pi is approximately {pi}");
+print("No newline here: ");
+println("Now newline.");
+print(stderr, "This is an error message\n");
+println("Done.");

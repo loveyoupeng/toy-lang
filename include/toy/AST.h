@@ -59,6 +59,43 @@ class NumberExprAST : public ExprAST {
   }
 };
 
+/// Expression class for string literals.
+class StringExprAST : public ExprAST {
+  std::string Val;
+
+ public:
+  StringExprAST(Location Loc, std::string Val)
+      : ExprAST(Loc), Val(std::move(Val)) {}
+  const std::string& getValue() const {
+    return Val;
+  }
+};
+
+/// Expression class for print/println.
+class PrintExprAST : public ExprAST {
+  bool isNewLine;
+  bool toStderr;
+  std::vector<std::unique_ptr<ExprAST>> args;
+
+ public:
+  PrintExprAST(Location Loc, bool isNewLine, bool toStderr,
+               std::vector<std::unique_ptr<ExprAST>> args)
+      : ExprAST(Loc),
+        isNewLine(isNewLine),
+        toStderr(toStderr),
+        args(std::move(args)) {}
+
+  bool getIsNewLine() const {
+    return isNewLine;
+  }
+  bool getToStderr() const {
+    return toStderr;
+  }
+  const std::vector<std::unique_ptr<ExprAST>>& getArgs() const {
+    return args;
+  }
+};
+
 /// Expression class for referencing a variable, like "a".
 class VariableExprAST : public ExprAST {
   std::string Name;

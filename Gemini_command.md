@@ -26,3 +26,21 @@ Summary:
 Automated commit by Gemini CLI.
 
 ---
+
+## Commit: 930f277e3c8215db236f90b228f813885bc8653f
+**Date:** Sun Jan 18 19:17:23 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+Update project structure for a semi-general programming language and implement basic MLIR generation for numeric expressions.
+
+Summary:
+1. Reorganized source tree into frontend, mlir, backend, and runtime folders.
+2. Created toy::AST namespace and basic expression nodes.
+3. Implemented toy::mlirGen to convert AST to MLIR (Arith and Func dialects).
+4. Updated main.cpp to demonstrate MLIR generation for '1.0 + 1.0'.
+5. Updated CMake configuration to support new MLIR dependencies.
+
+Automated commit by Gemini CLI.
+
+---

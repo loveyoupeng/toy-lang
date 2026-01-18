@@ -10,6 +10,8 @@ set(LLVM_LINK_COMPONENTS
 
 add_executable(toy-lang 
   main.cpp
+  frontend/Lexer.cpp
+  frontend/Parser.cpp
   mlir/MLIRGen.cpp
 )
 

@@ -62,3 +62,22 @@ Summary:
 Automated commit by Gemini CLI.
 
 ---
+
+## Commit: b0d243e53e9315af75811264b132a01d7e147b28
+**Date:** Sun Jan 18 19:35:48 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+Implement variable/constant declarations, type inference, and numeric types for .toy files.
+
+Summary:
+1. Implemented Lexer and Parser for .toy syntax including var/val declarations and type annotations.
+2. Updated AST to support variable declarations, usage, and a block of expressions.
+3. Expanded MLIR generation to handle byte, int8-64, uint8-64, and float32-64.
+4. Implemented symbol table management for variable lookup and basic type inference.
+5. Updated main.cpp to accept input .toy files.
+6. Added test.toy for verification.
+
+Automated commit by Gemini CLI.
+
+---

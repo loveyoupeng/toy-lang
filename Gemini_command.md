@@ -98,3 +98,23 @@ Summary:
 Automated commit by Gemini CLI.
 
 ---
+
+## Commit: 6ab3c54ae1657a8ac5eb95c9e7b23c68894c9a7d
+**Date:** Sun Jan 18 21:31:04 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+Implement type promotion rules, byte isolation, and explicit conversion macros.
+
+Summary:
+1. Updated Lexer and AST to support source location tracking (line/column).
+2. Added support for byte literals using the 'bx' prefix.
+3. Implemented implicit type promotion for integers and floats (small to large).
+4. Enforced strict isolation for the 'byte' type, requiring explicit casts.
+5. Added built-in 'asType()' conversion macros.
+6. Improved error reporting with detailed location and reason information.
+7. Updated test.toy with new feature examples.
+
+Automated commit by Gemini CLI.
+
+---

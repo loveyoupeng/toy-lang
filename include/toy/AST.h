@@ -8,6 +8,11 @@
 
 namespace toy {
 
+struct Location {
+  int line;
+  int col;
+};
+
 /// Supported numeric types in Toy.
 enum class DataType {
   Byte,  // uint8
@@ -28,8 +33,14 @@ struct VarType {
 };
 
 class ExprAST {
+  Location Loc;
+
  public:
+  explicit ExprAST(Location Loc) : Loc(Loc) {}
   virtual ~ExprAST() = default;
+  const Location& loc() const {
+    return Loc;
+  }
 };
 
 /// Expression class for numeric literals like "1.0".
@@ -38,8 +49,8 @@ class NumberExprAST : public ExprAST {
   DataType type;
 
  public:
-  explicit NumberExprAST(double Val, DataType type = DataType::Float64)
-      : Val(Val), type(type) {}
+  NumberExprAST(Location Loc, double Val, DataType type = DataType::Float64)
+      : ExprAST(Loc), Val(Val), type(type) {}
   double getVal() const {
     return Val;
   }
@@ -53,7 +64,8 @@ class VariableExprAST : public ExprAST {
   std::string Name;
 
  public:
-  explicit VariableExprAST(std::string Name) : Name(std::move(Name)) {}
+  VariableExprAST(Location Loc, std::string Name)
+      : ExprAST(Loc), Name(std::move(Name)) {}
   const std::string& getName() const {
     return Name;
   }
@@ -65,9 +77,9 @@ class BinaryExprAST : public ExprAST {
   std::unique_ptr<ExprAST> LHS, RHS;
 
  public:
-  BinaryExprAST(char Op, std::unique_ptr<ExprAST> LHS,
+  BinaryExprAST(Location Loc, char Op, std::unique_ptr<ExprAST> LHS,
                 std::unique_ptr<ExprAST> RHS)
-      : Op(Op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
+      : ExprAST(Loc), Op(Op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
   char getOp() const {
     return Op;
   }
@@ -87,9 +99,10 @@ class VarDeclAST : public ExprAST {
   bool isConstant;
 
  public:
-  VarDeclAST(std::string Name, VarType Type, std::unique_ptr<ExprAST> InitVal,
-             bool isConstant)
-      : Name(std::move(Name)),
+  VarDeclAST(Location Loc, std::string Name, VarType Type,
+             std::unique_ptr<ExprAST> InitVal, bool isConstant)
+      : ExprAST(Loc),
+        Name(std::move(Name)),
         Type(Type),
         InitVal(std::move(InitVal)),
         isConstant(isConstant) {}
@@ -108,13 +121,30 @@ class VarDeclAST : public ExprAST {
   }
 };
 
+/// Expression class for explicit casts/macros like asint16(b).
+class CastExprAST : public ExprAST {
+  DataType DestType;
+  std::unique_ptr<ExprAST> Arg;
+
+ public:
+  CastExprAST(Location Loc, DataType DestType, std::unique_ptr<ExprAST> Arg)
+      : ExprAST(Loc), DestType(DestType), Arg(std::move(Arg)) {}
+
+  DataType getDestType() const {
+    return DestType;
+  }
+  ExprAST* getArg() const {
+    return Arg.get();
+  }
+};
+
 /// A block of expressions (e.g. the whole file or a function body).
 class BlockAST : public ExprAST {
   std::vector<std::unique_ptr<ExprAST>> Expressions;
 
  public:
-  explicit BlockAST(std::vector<std::unique_ptr<ExprAST>> Expressions)
-      : Expressions(std::move(Expressions)) {}
+  BlockAST(Location Loc, std::vector<std::unique_ptr<ExprAST>> Expressions)
+      : ExprAST(Loc), Expressions(std::move(Expressions)) {}
   const std::vector<std::unique_ptr<ExprAST>>& getExpressions() const {
     return Expressions;
   }

@@ -1,5 +1,17 @@
+// Test Type Promotion
 var a:int32 = 10;
-val b:float64 = 3.14;
-var c = a + 5;
-val d = b * 2.0;
-var e:byte = 255;
+var b:int64 = 20;
+var c = a + b; // should promote a to int64
+
+// Test Byte Isolation and bx literal
+var myByte = bx13;
+// var error = myByte + 1; // This would cause a compile error if uncommented
+
+// Test Explicit Conversion Macro
+var promotedByte = asint16(myByte);
+var sum = promotedByte + 10;
+
+// Test Float Promotion
+var f1:float32 = 1.0;
+var f2:float64 = 2.0;
+var f3 = f1 * f2; // should promote f1 to float64

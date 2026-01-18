@@ -20,6 +20,7 @@ int getTokPrecedence(int tok) {
 }
 
 std::unique_ptr<BlockAST> Parser::parse() {
+  Location loc = lexer.getLastLoc();
   std::vector<std::unique_ptr<ExprAST>> expressions;
   while (curTok != tok_eof) {
     if (curTok == ';') {
@@ -32,10 +33,11 @@ std::unique_ptr<BlockAST> Parser::parse() {
       expressions.push_back(parseExpression());
     }
   }
-  return std::make_unique<BlockAST>(std::move(expressions));
+  return std::make_unique<BlockAST>(loc, std::move(expressions));
 }
 
 std::unique_ptr<ExprAST> Parser::parseVarDecl(bool isConstant) {
+  Location loc = lexer.getLastLoc();
   getNextToken();  // eat var/val
 
   if (curTok != tok_identifier) return nullptr;
@@ -55,8 +57,8 @@ std::unique_ptr<ExprAST> Parser::parseVarDecl(bool isConstant) {
 
   if (curTok == ';') getNextToken();
 
-  return std::make_unique<VarDeclAST>(name, VarType{type}, std::move(initVal),
-                                      isConstant);
+  return std::make_unique<VarDeclAST>(loc, name, VarType{type},
+                                      std::move(initVal), isConstant);
 }
 
 DataType Parser::parseType() {
@@ -98,12 +100,14 @@ DataType Parser::parseType() {
 }
 
 std::unique_ptr<ExprAST> Parser::parseExpression() {
+  Location loc = lexer.getLastLoc();
   auto lhs = parsePrimary();
   if (!lhs) return nullptr;
-  return parseBinOpRHS(0, std::move(lhs));
+  return parseBinOpRHS(loc, 0, std::move(lhs));
 }
 
 std::unique_ptr<ExprAST> Parser::parsePrimary() {
+  Location loc = lexer.getLastLoc();
   switch (curTok) {
     case tok_identifier:
       return parseIdentifierExpr();
@@ -116,24 +120,92 @@ std::unique_ptr<ExprAST> Parser::parsePrimary() {
       getNextToken();
       return v;
     }
+    case tok_as_int8:
+    case tok_as_int16:
+    case tok_as_int32:
+    case tok_as_int64:
+    case tok_as_uint8:
+    case tok_as_uint32:
+    case tok_as_uint64:
+    case tok_as_float32:
+    case tok_as_float64:
+    case tok_as_byte: {
+      int macroTok = curTok;
+      getNextToken();
+      if (curTok != '(') return nullptr;
+      getNextToken();
+      auto arg = parseExpression();
+      if (curTok != ')') return nullptr;
+      getNextToken();
+
+      DataType destType;
+      switch (macroTok) {
+        case tok_as_int8:
+          destType = DataType::Int8;
+          break;
+        case tok_as_int16:
+          destType = DataType::Int16;
+          break;
+        case tok_as_int32:
+          destType = DataType::Int32;
+          break;
+        case tok_as_int64:
+          destType = DataType::Int64;
+          break;
+        case tok_as_uint8:
+          destType = DataType::UInt8;
+          break;
+        case tok_as_uint32:
+          destType = DataType::UInt32;
+          break;
+        case tok_as_uint64:
+          destType = DataType::UInt64;
+          break;
+        case tok_as_float32:
+          destType = DataType::Float32;
+          break;
+        case tok_as_float64:
+          destType = DataType::Float64;
+          break;
+        case tok_as_byte:
+          destType = DataType::Byte;
+          break;
+        default:
+          return nullptr;
+      }
+      return std::make_unique<CastExprAST>(loc, destType, std::move(arg));
+    }
     default:
       return nullptr;
   }
 }
 
 std::unique_ptr<ExprAST> Parser::parseNumberExpr() {
-  auto result = std::make_unique<NumberExprAST>(lexer.getNumVal());
+  Location loc = lexer.getLastLoc();
+  DataType type = DataType::Float64;
+  // If it's bx prefix, Lexer would have recognized it.
+  // We can refine this by checking if identifierStr was "bx"
+  if (lexer.getIdentifier() == "bx") {
+    type = DataType::Byte;
+  } else {
+    // Simple heuristic: if it has '.' it's float64, otherwise int32
+    // This is naive but works for now.
+    type = DataType::Float64;
+  }
+
+  auto result = std::make_unique<NumberExprAST>(loc, lexer.getNumVal(), type);
   getNextToken();
   return result;
 }
 
 std::unique_ptr<ExprAST> Parser::parseIdentifierExpr() {
+  Location loc = lexer.getLastLoc();
   std::string name = lexer.getIdentifier();
   getNextToken();
-  return std::make_unique<VariableExprAST>(name);
+  return std::make_unique<VariableExprAST>(loc, name);
 }
 
-std::unique_ptr<ExprAST> Parser::parseBinOpRHS(int exprPrec,
+std::unique_ptr<ExprAST> Parser::parseBinOpRHS(Location loc, int exprPrec,
                                                std::unique_ptr<ExprAST> lhs) {
   while (true) {
     int tokPrec = getTokPrecedence(curTok);
@@ -147,12 +219,12 @@ std::unique_ptr<ExprAST> Parser::parseBinOpRHS(int exprPrec,
 
     int nextPrec = getTokPrecedence(curTok);
     if (tokPrec < nextPrec) {
-      rhs = parseBinOpRHS(tokPrec + 1, std::move(rhs));
+      rhs = parseBinOpRHS(loc, tokPrec + 1, std::move(rhs));
       if (!rhs) return nullptr;
     }
 
-    lhs =
-        std::make_unique<BinaryExprAST>(binOp, std::move(lhs), std::move(rhs));
+    lhs = std::make_unique<BinaryExprAST>(loc, binOp, std::move(lhs),
+                                          std::move(rhs));
   }
 }
 

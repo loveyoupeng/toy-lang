@@ -4,6 +4,8 @@
 #include <string>
 #include <utility>
 
+#include "toy/AST.h"
+
 namespace toy {
 
 enum Token {
@@ -28,12 +30,28 @@ enum Token {
   tok_type_uint64 = -17,
   tok_type_float32 = -18,
   tok_type_float64 = -19,
+
+  // built-in macros
+  tok_as_int8 = -30,
+  tok_as_int16 = -31,
+  tok_as_int32 = -32,
+  tok_as_int64 = -33,
+  tok_as_uint8 = -34,
+  tok_as_uint32 = -35,
+  tok_as_uint64 = -36,
+  tok_as_float32 = -37,
+  tok_as_float64 = -38,
+  tok_as_byte = -39,
 };
 
 class Lexer {
  public:
   explicit Lexer(std::string content)
-      : content(std::move(content)), lastChar(' ') {}
+      : content(std::move(content)),
+        lastChar(' '),
+        curLine(1),
+        curCol(0),
+        pos(0) {}
 
   int gettok();
   const std::string& getIdentifier() const {
@@ -42,17 +60,30 @@ class Lexer {
   double getNumVal() const {
     return numVal;
   }
+  Location getLastLoc() const {
+    return lastLoc;
+  }
 
  private:
   std::string content;
-  size_t pos = 0;
   int lastChar;
+  int curLine;
+  int curCol;
+  size_t pos;
   std::string identifierStr;
   double numVal;
+  Location lastLoc;
 
   int nextChar() {
     if (pos >= content.size()) return EOF;
-    return content[pos++];
+    int c = content[pos++];
+    if (c == '\n') {
+      curLine++;
+      curCol = 0;
+    } else {
+      curCol++;
+    }
+    return c;
   }
 };
 

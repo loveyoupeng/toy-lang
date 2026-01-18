@@ -68,7 +68,17 @@ Automated commit by Gemini CLI.
     run_command("git add Gemini_command.md")
     run_command("git commit --amend --no-edit")
 
-    # 6. Push
+    # 6. Update compile_commands.json
+    print("Updating compile_commands.json...")
+    build_json = os.path.join("build", "compile_commands.json")
+    if os.path.exists(build_json):
+        import shutil
+        shutil.copy2(build_json, "compile_commands.json")
+        print("compile_commands.json updated in root.")
+    else:
+        print("Note: build/compile_commands.json not found. Run cmake first.")
+
+    # 7. Push
     print("Pushing to upstream...")
     run_command("git push")
 

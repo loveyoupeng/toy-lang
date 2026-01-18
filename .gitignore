@@ -10,3 +10,4 @@ bin/
 lib/
 out/
 _deps/
+compile_commands.json

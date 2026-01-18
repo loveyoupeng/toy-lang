@@ -81,3 +81,20 @@ Summary:
 Automated commit by Gemini CLI.
 
 ---
+
+## Commit: 13c9d7959803d31402144fb6e0b1e32d05bdabce
+**Date:** Sun Jan 18 19:39:29 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+Enable automatic compile_commands.json generation and maintenance.
+
+Summary:
+1. Set CMAKE_EXPORT_COMPILE_COMMANDS ON in CMakeLists.txt.
+2. Updated gemini_push.py to copy compile_commands.json to the root.
+3. Updated pre-commit hook to refresh CMake cache.
+4. Added compile_commands.json to .gitignore.
+
+Automated commit by Gemini CLI.
+
+---

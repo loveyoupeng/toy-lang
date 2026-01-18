@@ -20,15 +20,20 @@ int Lexer::gettok() {
     if (identifierStr == "var") return tok_var;
     if (identifierStr == "val") return tok_val;
 
-    // Byte literal prefix: bx
-    if (identifierStr == "bx" && isdigit(lastChar)) {
-      std::string numStr;
-      while (isdigit(lastChar)) {
-        numStr += static_cast<char>(lastChar);
-        lastChar = nextChar();
+    // Byte literal prefix: bx<digits>
+    if (identifierStr.size() > 2 && identifierStr.substr(0, 2) == "bx") {
+      bool isByteLiteral = true;
+      for (size_t i = 2; i < identifierStr.size(); ++i) {
+        if (!isdigit(identifierStr[i])) {
+          isByteLiteral = false;
+          break;
+        }
       }
-      numVal = strtod(numStr.c_str(), nullptr);
-      return tok_number;  // Will be handled as Byte by type of literal logic
+      if (isByteLiteral) {
+        std::string numStr = identifierStr.substr(2);
+        numVal = strtod(numStr.c_str(), nullptr);
+        return tok_number;
+      }
     }
 
     static const std::map<std::string, int> keywordMap = {
@@ -58,6 +63,7 @@ int Lexer::gettok() {
     } while (isdigit(lastChar) || lastChar == '.');
 
     numVal = strtod(numStr.c_str(), nullptr);
+    identifierStr = numStr;
     return tok_number;
   }
 

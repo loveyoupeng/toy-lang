@@ -28,7 +28,7 @@ class Parser {
 
   std::unique_ptr<ExprAST> parseExpression();
   std::unique_ptr<ExprAST> parsePrimary();
-  std::unique_ptr<ExprAST> parseBinOpRHS(int exprPrec,
+  std::unique_ptr<ExprAST> parseBinOpRHS(Location loc, int exprPrec,
                                          std::unique_ptr<ExprAST> lhs);
   std::unique_ptr<ExprAST> parseNumberExpr();
   std::unique_ptr<ExprAST> parseIdentifierExpr();

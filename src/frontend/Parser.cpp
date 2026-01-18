@@ -183,14 +183,16 @@ std::unique_ptr<ExprAST> Parser::parsePrimary() {
 std::unique_ptr<ExprAST> Parser::parseNumberExpr() {
   Location loc = lexer.getLastLoc();
   DataType type = DataType::Float64;
-  // If it's bx prefix, Lexer would have recognized it.
-  // We can refine this by checking if identifierStr was "bx"
-  if (lexer.getIdentifier() == "bx") {
+
+  std::string id = lexer.getIdentifier();
+  if (id.size() >= 2 && id.substr(0, 2) == "bx") {
     type = DataType::Byte;
   } else {
-    // Simple heuristic: if it has '.' it's float64, otherwise int32
-    // This is naive but works for now.
-    type = DataType::Float64;
+    if (id.find('.') != std::string::npos) {
+      type = DataType::Float64;
+    } else {
+      type = DataType::Int32;
+    }
   }
 
   auto result = std::make_unique<NumberExprAST>(loc, lexer.getNumVal(), type);

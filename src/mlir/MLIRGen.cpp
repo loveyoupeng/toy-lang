@@ -28,7 +28,7 @@ class MLIRGenImpl {
     auto& entryBlock = *mainFunc.addEntryBlock();
     builder.setInsertionPointToStart(&entryBlock);
 
-    codegen(ast);
+    if (!codegen(ast)) return nullptr;
 
     builder.create<mlir::func::ReturnOp>(builder.getUnknownLoc());
 
@@ -65,18 +65,18 @@ class MLIRGenImpl {
 
   // Helper to check if a type is an integer (including Byte)
   bool isInteger(mlir::Type t) {
-    return t.isa<mlir::IntegerType>();
+    return llvm::isa<mlir::IntegerType>(t);
   }
   bool isFloat(mlir::Type t) {
-    return t.isa<mlir::FloatType>();
+    return llvm::isa<mlir::FloatType>(t);
   }
   bool isByte(mlir::Type t) {
-    auto it = t.dyn_cast<mlir::IntegerType>();
+    auto it = llvm::dyn_cast<mlir::IntegerType>(t);
     return it && it.getWidth() == 8 && !it.isSigned();
   }
 
   int getWidth(mlir::Type t) {
-    if (auto it = t.dyn_cast<mlir::IntegerType>()) return it.getWidth();
+    if (auto it = llvm::dyn_cast<mlir::IntegerType>(t)) return it.getWidth();
     if (t.isF32()) return 32;
     if (t.isF64()) return 64;
     return 0;
@@ -158,6 +158,15 @@ class MLIRGenImpl {
       }
     }
 
+    // Implicit Int to Float promotion
+    if (!isExplicit && isInteger(srcType) && isFloat(destType)) {
+      if (srcType.isUnsignedInteger())
+        return builder.create<mlir::arith::UIToFPOp>(builder.getUnknownLoc(),
+                                                     destType, value);
+      return builder.create<mlir::arith::SIToFPOp>(builder.getUnknownLoc(),
+                                                   destType, value);
+    }
+
     std::cerr << "Error [" << loc.line << ":" << loc.col
               << "]: Unsupported conversion.\n";
     return nullptr;
@@ -168,15 +177,14 @@ class MLIRGenImpl {
       for (auto& expr : block->getExpressions()) {
         if (!codegen(*expr)) return nullptr;
       }
-      return builder.getUnknownLoc()
-          .getContext()
-          ->getOrLoadDialect<mlir::arith::ArithDialect>()
-          ->getNamespace();  // Dummy
+      // Return a dummy value (e.g. 0.0) as block result for now.
+      return builder.create<mlir::arith::ConstantOp>(
+          builder.getUnknownLoc(), builder.getF64FloatAttr(0.0));
     }
 
     if (auto* num = dynamic_cast<NumberExprAST*>(&node)) {
       mlir::Type type = getMLIRType(num->getType());
-      if (type.isa<mlir::FloatType>()) {
+      if (llvm::isa<mlir::FloatType>(type)) {
         return builder.create<mlir::arith::ConstantOp>(
             builder.getUnknownLoc(), builder.getFloatAttr(type, num->getVal()));
       }
@@ -251,7 +259,7 @@ class MLIRGenImpl {
       }
 
       mlir::Type resType = lhs.getType();
-      bool isF = resType.isa<mlir::FloatType>();
+      bool isF = llvm::isa<mlir::FloatType>(resType);
 
       switch (bin->getOp()) {
         case '+':

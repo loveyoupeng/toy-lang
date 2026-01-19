@@ -12,6 +12,6 @@ var promotedByte = asint16(myByte);
 var sum = promotedByte + 10;
 
 // Test Float Promotion
-var f1:float32 = 1.0;
+var f1:float32 = asfloat32(1.0);
 var f2:float64 = 2.0;
 var f3 = f1 * f2; // should promote f1 to float64

@@ -93,6 +93,20 @@ int Lexer::gettok() {
 
   if (lastChar == EOF) return tok_eof;
 
+  if (lastChar == '/') {
+    lastChar = nextChar();
+    if (lastChar == '/') {
+      // Single-line comment
+      do {
+        lastChar = nextChar();
+      } while (lastChar != EOF && lastChar != '\n' && lastChar != '\r');
+
+      if (lastChar != EOF) return gettok();
+    } else {
+      return '/';
+    }
+  }
+
   int thisChar = lastChar;
   lastChar = nextChar();
   return thisChar;

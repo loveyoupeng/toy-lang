@@ -159,3 +159,12 @@ Verification:
   Done.
 
 ---
+
+## Commit: 8aa825c633dee9841275dc22dd04190043bc73ba
+**Date:** Mon Jan 19 20:21:46 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+chore: add .cache to .gitignore
+
+---

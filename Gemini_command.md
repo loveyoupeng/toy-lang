@@ -231,3 +231,30 @@ Verification:
 - Verified type error at line 7 when implicit byte conversion is attempted.
 
 ---
+
+## Commit: 78f67f8492bfc26966ad1fe989e998938bbb1511
+
+**Date:** Mon Jan 19 22:08:29 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+feat: support direct compilation to executable
+
+What I've done:
+
+- Updated toy-lang compiler to support direct compilation to native executables via '-o' flag.
+- Integrated MLIR lowering passes (Arith/Func to LLVM) into the compiler driver.
+- Added LLVM backend support to emit object files.
+- Automated linking via clang in the compiler driver.
+- Added *.log to .gitignore.
+
+Verification:
+
+- Compiled test_print.toy directly to test_direct.exe and verified output:
+  the value 10 + 20 = 30
+  Pi is approximately 3.141590
+  No newline here: Now newline.
+  This is an error message
+  Done.
+
+---

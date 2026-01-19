@@ -11,12 +11,12 @@ include(CPM)
 # --- Dependencies ---
 
 # GoogleTest
-# CPMAddPackage(
-#   NAME googletest
-#   GITHUB_REPOSITORY google/googletest
-#   VERSION 1.14.0
-#   OPTIONS "INSTALL_GTEST OFF" "gtest_force_shared_crt ON"
-# )
+CPMAddPackage(
+  NAME googletest
+  GITHUB_REPOSITORY google/googletest
+  VERSION 1.14.0
+  OPTIONS "INSTALL_GTEST OFF" "gtest_force_shared_crt ON"
+)
 
 # Google Benchmark
 # CPMAddPackage(
@@ -47,5 +47,5 @@ add_definitions(${LLVM_DEFINITIONS})
 
 # --- Subdirectories ---
 add_subdirectory(src)
-# add_subdirectory(tests)
-# add_subdirectory(benchmarks)
+add_subdirectory(tests)
+add_subdirectory(benchmarks)

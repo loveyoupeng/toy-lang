@@ -10,12 +10,14 @@
 
 namespace toy {
 
-static std::map<char, int> BinopPrecedence = {
+static const std::map<char, int> binopPrecedence = {
     {'+', 20}, {'-', 20}, {'*', 40}, {'/', 40}};
 
 int getTokPrecedence(int tok) {
   if (!isascii(tok)) return -1;
-  int prec = BinopPrecedence[tok];
+  auto it = binopPrecedence.find(static_cast<char>(tok));
+  if (it == binopPrecedence.end()) return -1;
+  int prec = it->second;
   if (prec <= 0) return -1;
   return prec;
 }
@@ -265,6 +267,8 @@ DataType Parser::parseType() {
     case tok_type_float64:
       type = DataType::Float64;
       break;
+    default:
+      break;
   }
   getNextToken();
   return type;
@@ -347,7 +351,7 @@ std::unique_ptr<ExprAST> Parser::parsePrimary() {
       if (curTok != ')') return nullptr;
       getNextToken();
 
-      DataType destType;
+      DataType destType = DataType::Inferred;
       switch (macroTok) {
         case tok_as_int8:
           destType = DataType::Int8;

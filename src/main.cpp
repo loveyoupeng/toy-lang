@@ -126,17 +126,17 @@ int main(int argc, char** argv) {
   llvmModule->setTargetTriple(triple);
 
   std::string error;
-  auto target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
+  const auto* target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
   if (!target) {
     llvm::errs() << error;
     return 1;
   }
 
-  auto CPU = "generic";
-  auto features = "";
+  const auto* CPU = "generic";
+  const auto* features = "";
   llvm::TargetOptions opt;
   auto RM = std::optional<llvm::Reloc::Model>();
-  auto targetMachine =
+  auto* targetMachine =
       target->createTargetMachine(triple, CPU, features, opt, RM);
 
   llvmModule->setDataLayout(targetMachine->createDataLayout());
@@ -170,10 +170,10 @@ int main(int argc, char** argv) {
   }
 
   std::vector<llvm::StringRef> args;
-  args.push_back(*clangPath);
-  args.push_back(objFilename);
-  args.push_back("-o");
-  args.push_back(outFilename);
+  args.emplace_back(*clangPath);
+  args.emplace_back(objFilename);
+  args.emplace_back("-o");
+  args.emplace_back(outFilename);
 
   if (llvm::sys::ExecuteAndWait(*clangPath, args) != 0) {
     llvm::errs() << "Linking failed\n";
@@ -181,7 +181,8 @@ int main(int argc, char** argv) {
   }
 
   // Cleanup object file
-  llvm::sys::fs::remove(objFilename);
+  auto ec = llvm::sys::fs::remove(objFilename);
+  (void)ec;
 
   return 0;
 }

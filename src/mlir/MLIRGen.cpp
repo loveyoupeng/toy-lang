@@ -68,7 +68,6 @@ class MLIRGenImpl {
       case DataType::Float32:
         return builder.getF32Type();
       case DataType::Float64:
-        return builder.getF64Type();
       default:
         return builder.getF64Type();
     }
@@ -201,7 +200,8 @@ class MLIRGenImpl {
                                                       destType, value);
         return builder.create<mlir::arith::ExtSIOp>(builder.getUnknownLoc(),
                                                     destType, value);
-      } else if (getWidth(destType) < getWidth(srcType)) {
+      }
+      if (getWidth(destType) < getWidth(srcType)) {
         if (!isExplicit) {
           std::cerr << "Error [" << loc.line << ":" << loc.col
                     << "]: Illegal implicit truncation from "
@@ -219,7 +219,8 @@ class MLIRGenImpl {
       if (getWidth(destType) > getWidth(srcType)) {
         return builder.create<mlir::arith::ExtFOp>(builder.getUnknownLoc(),
                                                    destType, value);
-      } else if (getWidth(destType) < getWidth(srcType)) {
+      }
+      if (getWidth(destType) < getWidth(srcType)) {
         if (!isExplicit) {
           std::cerr << "Error [" << loc.line << ":" << loc.col
                     << "]: Illegal implicit float truncation.\n";
@@ -490,6 +491,11 @@ class MLIRGenImpl {
                                                         lhs, rhs);
           return builder.create<mlir::arith::DivSIOp>(builder.getUnknownLoc(),
                                                       lhs, rhs);
+        default:
+          std::cerr << "Error [" << bin->loc().line << ":" << bin->loc().col
+                    << "]: Unsupported binary operator '" << bin->getOp()
+                    << "'\n";
+          return nullptr;
       }
     }
     return nullptr;

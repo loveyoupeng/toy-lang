@@ -258,3 +258,28 @@ Verification:
   Done.
 
 ---
+
+## Commit: c4c92c5c35a7b9b56686e15bfc2de26a436763b2
+
+**Date:** Mon Jan 19 23:55:29 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+feat: add bool type and if/else conditions
+
+What I've done:
+
+- Implemented bool type and literals (true/false).
+- Added if/else statements with brace-enclosed blocks.
+- Implemented variable assignment.
+- Disallowed conversions between bool and other types.
+- Fixed infinite loop in Parser by ensuring progress on error.
+- Integrated MLIR SCF and ControlFlow dialects.
+
+Verification:
+
+- Tested if/else and assignments with successful execution.
+- Verified bool conversion error message.
+- Confirmed no hangs on malformed input via timeout tests.
+
+---

@@ -188,3 +188,25 @@ Verification:
 chore: add .cache to .gitignore
 
 ---
+
+## Commit: fb4f12bc83994b4ce6fa827f626e025e570b8d16
+
+**Date:** Mon Jan 19 20:29:29 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+chore: fix markdownlint issues and add pre-commit hook
+
+What I've done:
+
+- Fixed markdownlint errors and warnings in all markdown files.
+- Added .markdownlint.json to configure linting rules (relaxed line length).
+- Updated .git/hooks/pre-commit to automatically run markdownlint --fix.
+- Added scripts/pre-commit to track the hook in the repository.
+
+Verification:
+
+- Ran npx markdownlint-cli on all markdown files and verified they pass.
+- Verified that the pre-commit hook runs correctly.
+
+---

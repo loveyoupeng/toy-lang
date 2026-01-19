@@ -4,11 +4,11 @@ This guide describes how to compile a `.toy` source file into a standalone execu
 
 ## Prerequisites
 
-1.  **Toy Compiler (`toy-lang`)**: Built from this repository.
-2.  **LLVM Tools**: The following tools must be available (built from LLVM source with MLIR enabled):
-    *   `mlir-opt`
-    *   `mlir-translate`
-    *   `clang` (or system compiler capable of linking LLVM IR)
+1. **Toy Compiler (`toy-lang`)**: Built from this repository.
+2. **LLVM Tools**: The following tools must be available (built from LLVM source with MLIR enabled):
+    * `mlir-opt`
+    * `mlir-translate`
+    * `clang` (or system compiler capable of linking LLVM IR)
 
 ## Compilation Pipeline
 

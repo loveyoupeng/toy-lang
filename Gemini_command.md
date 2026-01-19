@@ -210,3 +210,24 @@ Verification:
 - Verified that the pre-commit hook runs correctly.
 
 ---
+
+## Commit: 9cc0678d4f223ed1d6965dbdad620ad5e4d14c34
+
+**Date:** Mon Jan 19 21:58:05 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+fix: add comment support to Lexer and fix test.toy type errors
+
+What I've done:
+
+- Implemented single-line comment support in the Lexer.
+- Fixed implicit float truncation in test.toy.
+- Verified type error reporting.
+
+Verification:
+
+- Ran toy-lang on test.toy and verified successful MLIR generation.
+- Verified type error at line 7 when implicit byte conversion is attempted.
+
+---

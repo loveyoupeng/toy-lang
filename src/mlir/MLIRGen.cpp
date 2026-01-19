@@ -8,6 +8,7 @@
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
@@ -21,6 +22,7 @@ class MLIRGenImpl {
       : context(context), builder(&context) {}
 
   mlir::ModuleOp generate(ExprAST& ast) {
+    context.getOrLoadDialect<mlir::scf::SCFDialect>();
     module = mlir::ModuleOp::create(builder.getUnknownLoc());
 
     auto funcType = builder.getFunctionType({}, {});
@@ -32,7 +34,12 @@ class MLIRGenImpl {
 
     if (!codegen(ast)) return nullptr;
 
-    builder.create<mlir::func::ReturnOp>(builder.getUnknownLoc());
+    // Ensure main function ends with return
+    if (mainFunc.front().empty() ||
+        !llvm::isa<mlir::func::ReturnOp>(mainFunc.front().back())) {
+      builder.setInsertionPointToEnd(&mainFunc.front());
+      builder.create<mlir::func::ReturnOp>(builder.getUnknownLoc());
+    }
 
     module.push_back(mainFunc);
     return module;
@@ -41,6 +48,8 @@ class MLIRGenImpl {
  private:
   mlir::Type getMLIRType(DataType type) {
     switch (type) {
+      case DataType::Bool:
+        return builder.getI1Type();
       case DataType::Byte:
       case DataType::UInt8:
         return builder.getIntegerType(8, false);
@@ -67,7 +76,13 @@ class MLIRGenImpl {
 
   // Helper to check if a type is an integer (including Byte)
   bool isInteger(mlir::Type t) {
-    return llvm::isa<mlir::IntegerType>(t);
+    return llvm::isa<mlir::IntegerType>(t) && !t.isInteger(1);
+  }
+  bool isBool(mlir::Type t) {
+    return t.isInteger(1);
+  }
+  bool isString(mlir::Type t) {
+    return llvm::isa<mlir::LLVM::LLVMPointerType>(t);
   }
   bool isFloat(mlir::Type t) {
     return llvm::isa<mlir::FloatType>(t);
@@ -160,6 +175,13 @@ class MLIRGenImpl {
     mlir::Type srcType = value.getType();
     if (srcType == destType) return value;
 
+    // Bool restrictions: bool cannot be converted to/from any other type
+    if (isBool(srcType) || isBool(destType)) {
+      std::cerr << "Error [" << loc.line << ":" << loc.col
+                << "]: Conversion involving 'bool' is not allowed.\n";
+      return nullptr;
+    }
+
     // Byte restrictions
     if (!isExplicit) {
       if (isByte(srcType) || isByte(destType)) {
@@ -247,12 +269,16 @@ class MLIRGenImpl {
 
   mlir::Value codegen(ExprAST& node) {
     if (auto* block = dynamic_cast<BlockAST*>(&node)) {
+      mlir::Value lastVal;
       for (auto& expr : block->getExpressions()) {
-        if (!codegen(*expr)) return nullptr;
+        lastVal = codegen(*expr);
+        if (!lastVal) return nullptr;
       }
-      // Return a dummy value (e.g. 0.0) as block result for now.
-      return builder.create<mlir::arith::ConstantOp>(
-          builder.getUnknownLoc(), builder.getF64FloatAttr(0.0));
+      if (!lastVal) {
+        return builder.create<mlir::arith::ConstantIntOp>(
+            builder.getUnknownLoc(), 0, 32);
+      }
+      return lastVal;
     }
 
     if (auto* num = dynamic_cast<NumberExprAST*>(&node)) {
@@ -264,6 +290,60 @@ class MLIRGenImpl {
       return builder.create<mlir::arith::ConstantOp>(
           builder.getUnknownLoc(),
           builder.getIntegerAttr(type, static_cast<int64_t>(num->getVal())));
+    }
+
+    if (auto* boolExpr = dynamic_cast<BoolExprAST*>(&node)) {
+      return builder.create<mlir::arith::ConstantIntOp>(builder.getUnknownLoc(),
+                                                        boolExpr->getVal(), 1);
+    }
+
+    if (auto* ifExpr = dynamic_cast<IfExprAST*>(&node)) {
+      auto cond = codegen(*ifExpr->getCond());
+      if (!cond) return nullptr;
+
+      if (!isBool(cond.getType())) {
+        std::cerr << "Error [" << ifExpr->getCond()->loc().line << ":"
+                  << ifExpr->getCond()->loc().col
+                  << "]: If condition must be boolean.\n";
+        return nullptr;
+      }
+
+      auto ifOp = builder.create<mlir::scf::IfOp>(
+          getLoc(ifExpr->loc()), cond,
+          /*hasElse=*/ifExpr->getElse() != nullptr);
+
+      // Then block
+      {
+        mlir::OpBuilder::InsertionGuard guard(builder);
+        builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
+        if (!codegen(*ifExpr->getThen())) return nullptr;
+        // Terminator for scf.if then region
+        if (ifOp.getThenRegion().back().empty() ||
+            !ifOp.getThenRegion()
+                 .back()
+                 .back()
+                 .hasTrait<mlir::OpTrait::IsTerminator>()) {
+          builder.create<mlir::scf::YieldOp>(builder.getUnknownLoc());
+        }
+      }
+
+      // Else block
+      if (ifExpr->getElse()) {
+        mlir::OpBuilder::InsertionGuard guard(builder);
+        builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
+        if (!codegen(*ifExpr->getElse())) return nullptr;
+        // Terminator for scf.if else region
+        if (ifOp.getElseRegion().back().empty() ||
+            !ifOp.getElseRegion()
+                 .back()
+                 .back()
+                 .hasTrait<mlir::OpTrait::IsTerminator>()) {
+          builder.create<mlir::scf::YieldOp>(builder.getUnknownLoc());
+        }
+      }
+
+      return builder.create<mlir::arith::ConstantIntOp>(builder.getUnknownLoc(),
+                                                        0, 32);
     }
 
     if (auto* varDecl = dynamic_cast<VarDeclAST*>(&node)) {
@@ -316,7 +396,9 @@ class MLIRGenImpl {
           if (!val) return nullptr;
 
           std::string fmt;
-          if (llvm::isa<mlir::FloatType>(val.getType()))
+          if (isString(val.getType()))
+            fmt = "%s";
+          else if (llvm::isa<mlir::FloatType>(val.getType()))
             fmt = "%f";
           else
             fmt = "%d";
@@ -372,6 +454,15 @@ class MLIRGenImpl {
       bool isF = llvm::isa<mlir::FloatType>(resType);
 
       switch (bin->getOp()) {
+        case '=': {
+          auto* varLHS = dynamic_cast<VariableExprAST*>(bin->getLHS());
+          // Since we checked in parser, varLHS should be valid.
+          // Note: In a real compiler we'd handle memory/alloca,
+          // here we just update the symbol table for this SSA-like model
+          // (limited).
+          symbolTable[varLHS->getName()] = rhs;
+          return rhs;
+        }
         case '+':
           if (isF)
             return builder.create<mlir::arith::AddFOp>(builder.getUnknownLoc(),

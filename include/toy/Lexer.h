@@ -14,13 +14,18 @@ enum Token {
   // commands
   tok_var = -2,
   tok_val = -3,
+  tok_if = -6,
+  tok_else = -7,
 
   // primary
   tok_identifier = -4,
   tok_number = -5,
+  tok_true = -8,
+  tok_false = -9,
 
   // types
   tok_type_byte = -10,
+  tok_type_bool = -20,
   tok_type_int8 = -11,
   tok_type_int16 = -12,
   tok_type_int32 = -13,

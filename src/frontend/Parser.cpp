@@ -27,14 +27,109 @@ std::unique_ptr<BlockAST> Parser::parse() {
     if (curTok == ';') {
       getNextToken();
     } else if (curTok == tok_var) {
-      expressions.push_back(parseVarDecl(false));
+      auto decl = parseVarDecl(false);
+      if (decl)
+        expressions.push_back(std::move(decl));
+      else
+        getNextToken();  // ensure progress
     } else if (curTok == tok_val) {
-      expressions.push_back(parseVarDecl(true));
+      auto decl = parseVarDecl(true);
+      if (decl)
+        expressions.push_back(std::move(decl));
+      else
+        getNextToken();  // ensure progress
+    } else if (curTok == tok_if) {
+      auto ifExpr = parseIfExpr();
+      if (ifExpr)
+        expressions.push_back(std::move(ifExpr));
+      else
+        getNextToken();  // ensure progress
     } else {
-      expressions.push_back(parseExpression());
+      auto expr = parseExpression();
+      if (expr)
+        expressions.push_back(std::move(expr));
+      else
+        getNextToken();  // ensure progress
     }
   }
   return std::make_unique<BlockAST>(loc, std::move(expressions));
+}
+
+std::unique_ptr<BlockAST> Parser::parseBlock() {
+  Location loc = lexer.getLastLoc();
+  if (curTok != '{') return nullptr;
+  getNextToken();  // eat {
+
+  std::vector<std::unique_ptr<ExprAST>> expressions;
+  while (curTok != '}' && curTok != tok_eof) {
+    if (curTok == ';') {
+      getNextToken();
+    } else if (curTok == tok_var) {
+      auto decl = parseVarDecl(false);
+      if (decl)
+        expressions.push_back(std::move(decl));
+      else
+        getNextToken();
+    } else if (curTok == tok_val) {
+      auto decl = parseVarDecl(true);
+      if (decl)
+        expressions.push_back(std::move(decl));
+      else
+        getNextToken();
+    } else if (curTok == tok_if) {
+      auto ifExpr = parseIfExpr();
+      if (ifExpr)
+        expressions.push_back(std::move(ifExpr));
+      else
+        getNextToken();
+    } else {
+      auto expr = parseExpression();
+      if (expr)
+        expressions.push_back(std::move(expr));
+      else
+        getNextToken();
+    }
+  }
+
+  if (curTok != '}') return nullptr;
+  getNextToken();  // eat }
+
+  return std::make_unique<BlockAST>(loc, std::move(expressions));
+}
+
+std::unique_ptr<ExprAST> Parser::parseIfExpr() {
+  Location loc = lexer.getLastLoc();
+  getNextToken();  // eat if
+
+  if (curTok != '(') return nullptr;
+  getNextToken();  // eat (
+
+  auto cond = parseExpression();
+  if (!cond) return nullptr;
+
+  if (curTok != ')') return nullptr;
+  getNextToken();  // eat )
+
+  auto thenBlock = parseBlock();
+  if (!thenBlock) return nullptr;
+
+  std::unique_ptr<BlockAST> elseBlock = nullptr;
+  if (curTok == tok_else) {
+    getNextToken();  // eat else
+    if (curTok == tok_if) {
+      // else if
+      Location elseLoc = lexer.getLastLoc();
+      auto ifExpr = parseIfExpr();
+      std::vector<std::unique_ptr<ExprAST>> exprs;
+      exprs.push_back(std::move(ifExpr));
+      elseBlock = std::make_unique<BlockAST>(elseLoc, std::move(exprs));
+    } else {
+      elseBlock = parseBlock();
+    }
+  }
+
+  return std::make_unique<IfExprAST>(loc, std::move(cond), std::move(thenBlock),
+                                     std::move(elseBlock));
 }
 
 std::unique_ptr<ExprAST> Parser::parseVarDecl(bool isConstant) {
@@ -137,6 +232,9 @@ std::unique_ptr<ExprAST> Parser::parsePrintExpr() {
 DataType Parser::parseType() {
   DataType type = DataType::Inferred;
   switch (curTok) {
+    case tok_type_bool:
+      type = DataType::Bool;
+      break;
     case tok_type_byte:
       type = DataType::Byte;
       break;
@@ -175,7 +273,29 @@ DataType Parser::parseType() {
 std::unique_ptr<ExprAST> Parser::parseExpression() {
   Location loc = lexer.getLastLoc();
   auto lhs = parsePrimary();
-  if (!lhs) return nullptr;
+  if (!lhs) {
+    std::cerr << "Error [" << loc.line << ":" << loc.col
+              << "]: Expected primary expression, got token " << curTok << "\n";
+    return nullptr;
+  }
+
+  // Check for assignment
+  if (curTok == '=') {
+    getNextToken();  // eat =
+    auto rhs = parseExpression();
+    if (!rhs) return nullptr;
+
+    auto* varLHS = dynamic_cast<VariableExprAST*>(lhs.get());
+    if (!varLHS) {
+      std::cerr << "Error [" << loc.line << ":" << loc.col
+                << "]: Left-hand side of assignment must be a variable.\n";
+      return nullptr;
+    }
+
+    return std::make_unique<BinaryExprAST>(loc, '=', std::move(lhs),
+                                           std::move(rhs));
+  }
+
   return parseBinOpRHS(loc, 0, std::move(lhs));
 }
 
@@ -186,6 +306,19 @@ std::unique_ptr<ExprAST> Parser::parsePrimary() {
       return parseIdentifierExpr();
     case tok_number:
       return parseNumberExpr();
+    case tok_string_literal: {
+      std::string val = lexer.getStringVal();
+      getNextToken();
+      return std::make_unique<StringExprAST>(loc, val);
+    }
+    case tok_true:
+      getNextToken();
+      return std::make_unique<BoolExprAST>(loc, true);
+    case tok_false:
+      getNextToken();
+      return std::make_unique<BoolExprAST>(loc, false);
+    case tok_if:
+      return parseIfExpr();
     case tok_print:
     case tok_println:
       return parsePrintExpr();

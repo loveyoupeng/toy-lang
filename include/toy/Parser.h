@@ -33,6 +33,8 @@ class Parser {
   std::unique_ptr<ExprAST> parseNumberExpr();
   std::unique_ptr<ExprAST> parseIdentifierExpr();
   std::unique_ptr<ExprAST> parseVarDecl(bool isConstant);
+  std::unique_ptr<ExprAST> parseIfExpr();
+  std::unique_ptr<BlockAST> parseBlock();
   std::unique_ptr<ExprAST> parsePrintExpr();
   DataType parseType();
 };

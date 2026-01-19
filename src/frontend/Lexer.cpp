@@ -19,6 +19,10 @@ int Lexer::gettok() {
 
     if (identifierStr == "var") return tok_var;
     if (identifierStr == "val") return tok_val;
+    if (identifierStr == "if") return tok_if;
+    if (identifierStr == "else") return tok_else;
+    if (identifierStr == "true") return tok_true;
+    if (identifierStr == "false") return tok_false;
 
     // Byte literal prefix: bx<digits>
     if (identifierStr.size() > 2 && identifierStr.substr(0, 2) == "bx") {
@@ -37,19 +41,20 @@ int Lexer::gettok() {
     }
 
     static const std::map<std::string, int> keywordMap = {
-        {"byte", tok_type_byte},       {"int8", tok_type_int8},
-        {"int16", tok_type_int16},     {"int32", tok_type_int32},
-        {"int", tok_type_int32},       {"int64", tok_type_int64},
-        {"uint8", tok_type_uint8},     {"uint32", tok_type_uint32},
-        {"uint64", tok_type_uint64},   {"float32", tok_type_float32},
-        {"float64", tok_type_float64}, {"double", tok_type_float64},
-        {"asint8", tok_as_int8},       {"asint16", tok_as_int16},
-        {"asint32", tok_as_int32},     {"asint64", tok_as_int64},
-        {"asuint8", tok_as_uint8},     {"asuint32", tok_as_uint32},
-        {"asuint64", tok_as_uint64},   {"asfloat32", tok_as_float32},
-        {"asfloat64", tok_as_float64}, {"asbyte", tok_as_byte},
-        {"print", tok_print},          {"println", tok_println},
-        {"stderr", tok_stderr},
+        {"byte", tok_type_byte},       {"bool", tok_type_bool},
+        {"int8", tok_type_int8},       {"int16", tok_type_int16},
+
+        {"int32", tok_type_int32},     {"int", tok_type_int32},
+        {"int64", tok_type_int64},     {"uint8", tok_type_uint8},
+        {"uint32", tok_type_uint32},   {"uint64", tok_type_uint64},
+        {"float32", tok_type_float32}, {"float64", tok_type_float64},
+        {"double", tok_type_float64},  {"asint8", tok_as_int8},
+        {"asint16", tok_as_int16},     {"asint32", tok_as_int32},
+        {"asint64", tok_as_int64},     {"asuint8", tok_as_uint8},
+        {"asuint32", tok_as_uint32},   {"asuint64", tok_as_uint64},
+        {"asfloat32", tok_as_float32}, {"asfloat64", tok_as_float64},
+        {"asbyte", tok_as_byte},       {"print", tok_print},
+        {"println", tok_println},      {"stderr", tok_stderr},
     };
 
     if (keywordMap.count(identifierStr)) return keywordMap.at(identifierStr);

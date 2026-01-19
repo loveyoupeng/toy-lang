@@ -16,11 +16,15 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/TargetParser/Host.h"
 #include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
+#include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
 #include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVMPass.h"
 #include "mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h"
+#include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/ControlFlow/IR/ControlFlow.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/ExecutionEngine/ExecutionEngine.h"
 #include "mlir/ExecutionEngine/OptUtils.h"
 #include "mlir/IR/BuiltinOps.h"
@@ -62,6 +66,8 @@ int main(int argc, char** argv) {
   mlir::MLIRContext context;
   context.getOrLoadDialect<mlir::arith::ArithDialect>();
   context.getOrLoadDialect<mlir::func::FuncDialect>();
+  context.getOrLoadDialect<mlir::scf::SCFDialect>();
+  context.getOrLoadDialect<mlir::cf::ControlFlowDialect>();
   context.getOrLoadDialect<mlir::LLVM::LLVMDialect>();
 
   toy::Lexer lexer(content);
@@ -69,7 +75,7 @@ int main(int argc, char** argv) {
   auto ast = parser.parse();
 
   if (!ast) {
-    std::cerr << "Parsing failed\n";
+    std::cerr << "Parsing failed at " << filename << "\n";
     return 1;
   }
 
@@ -88,6 +94,8 @@ int main(int argc, char** argv) {
   // --- Lowering ---
   mlir::PassManager pm(&context);
   pm.addPass(mlir::createArithToLLVMConversionPass());
+  pm.addPass(mlir::createSCFToControlFlowPass());
+  pm.addPass(mlir::createConvertControlFlowToLLVMPass());
   pm.addPass(mlir::createConvertFuncToLLVMPass());
   pm.addPass(mlir::createReconcileUnrealizedCastsPass());
 

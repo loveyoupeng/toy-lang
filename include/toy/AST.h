@@ -15,6 +15,8 @@ struct Location {
 
 /// Supported numeric types in Toy.
 enum class DataType {
+  Bool,
+  String,
   Byte,  // uint8
   Int8,
   Int16,
@@ -43,6 +45,17 @@ class ExprAST {
   }
 };
 
+/// Expression class for boolean literals like "true".
+class BoolExprAST : public ExprAST {
+  bool Val;
+
+ public:
+  BoolExprAST(Location Loc, bool Val) : ExprAST(Loc), Val(Val) {}
+  bool getVal() const {
+    return Val;
+  }
+};
+
 /// Expression class for numeric literals like "1.0".
 class NumberExprAST : public ExprAST {
   double Val;
@@ -68,6 +81,29 @@ class StringExprAST : public ExprAST {
       : ExprAST(Loc), Val(std::move(Val)) {}
   const std::string& getValue() const {
     return Val;
+  }
+};
+
+/// Expression class for if/else.
+class IfExprAST : public ExprAST {
+  std::unique_ptr<ExprAST> Cond, Then, Else;
+
+ public:
+  IfExprAST(Location Loc, std::unique_ptr<ExprAST> Cond,
+            std::unique_ptr<ExprAST> Then, std::unique_ptr<ExprAST> Else)
+      : ExprAST(Loc),
+        Cond(std::move(Cond)),
+        Then(std::move(Then)),
+        Else(std::move(Else)) {}
+
+  ExprAST* getCond() const {
+    return Cond.get();
+  }
+  ExprAST* getThen() const {
+    return Then.get();
+  }
+  ExprAST* getElse() const {
+    return Else.get();
   }
 };
 

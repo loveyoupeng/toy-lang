@@ -28,11 +28,15 @@ target_link_libraries(toy_compiler PUBLIC
   MLIRSupport
   MLIRArithDialect
   MLIRFuncDialect
+  MLIRSCFDialect
+  MLIRControlFlowDialect
   MLIRLLVMDialect
   MLIRTransforms
   MLIRPass
   MLIRArithToLLVM
   MLIRFuncToLLVM
+  MLIRSCFToControlFlow
+  MLIRControlFlowToLLVM
   MLIRReconcileUnrealizedCasts
   MLIRTargetLLVMIRExport
   MLIRBuiltinToLLVMIRTranslation

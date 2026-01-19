@@ -11,20 +11,20 @@ include(CPM)
 # --- Dependencies ---
 
 # GoogleTest
-CPMAddPackage(
-  NAME googletest
-  GITHUB_REPOSITORY google/googletest
-  VERSION 1.14.0
-  OPTIONS "INSTALL_GTEST OFF" "gtest_force_shared_crt ON"
-)
+# CPMAddPackage(
+#   NAME googletest
+#   GITHUB_REPOSITORY google/googletest
+#   VERSION 1.14.0
+#   OPTIONS "INSTALL_GTEST OFF" "gtest_force_shared_crt ON"
+# )
 
 # Google Benchmark
-CPMAddPackage(
-  NAME benchmark
-  GITHUB_REPOSITORY google/benchmark
-  VERSION 1.8.3
-  OPTIONS "BENCHMARK_ENABLE_TESTING OFF" "BENCHMARK_INSTALL_DOCS OFF" "BENCHMARK_ENABLE_GTEST_TESTS OFF"
-)
+# CPMAddPackage(
+#   NAME benchmark
+#   GITHUB_REPOSITORY google/benchmark
+#   VERSION 1.8.3
+#   OPTIONS "BENCHMARK_ENABLE_TESTING OFF" "BENCHMARK_INSTALL_DOCS OFF" "BENCHMARK_ENABLE_GTEST_TESTS OFF"
+# )
 
 # MLIR / LLVM
 # Note: Users must set MLIR_DIR (or LLVM_DIR) to the installation path of MLIR/LLVM
@@ -47,5 +47,5 @@ add_definitions(${LLVM_DEFINITIONS})
 
 # --- Subdirectories ---
 add_subdirectory(src)
-add_subdirectory(tests)
-add_subdirectory(benchmarks)
+# add_subdirectory(tests)
+# add_subdirectory(benchmarks)

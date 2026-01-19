@@ -16,10 +16,15 @@ The compilation process involves lowering the Toy AST to MLIR, refining the MLIR
 
 ### Step 1: Generate MLIR from Toy Source
 
-Use the `toy-lang` compiler to parse the `.toy` file and generate the initial MLIR (Toy dialect, Arith dialect, etc.).
+Use the `toy-lang` compiler to parse the `.toy` file and generate the initial MLIR.
+
+**Note for Windows (PowerShell):** Using `>` for redirection in PowerShell may result in UTF-16 encoding with a Byte Order Mark (BOM), which `mlir-opt` does not support. Use `cmd /c` or ensure the output is ASCII/UTF-8 without BOM.
 
 ```bash
-# Windows (PowerShell/CMD) - use cmd /c to ensure correct encoding/redirection if needed
+# Windows (CMD)
+build\src\toy-lang.exe test.toy > test.mlir
+
+# Windows (PowerShell)
 cmd /c "build\src\toy-lang.exe test.toy > test.mlir"
 
 # Linux/Mac
@@ -28,7 +33,7 @@ cmd /c "build\src\toy-lang.exe test.toy > test.mlir"
 
 ### Step 2: Lower MLIR to LLVM Dialect
 
-Use `mlir-opt` to run conversion passes that transform high-level dialects (Arith, Func) into the LLVM dialect.
+Use `mlir-opt` to run conversion passes. It is recommended to use the `-o` flag instead of redirection.
 
 ```bash
 path/to/mlir-opt \
@@ -40,7 +45,7 @@ path/to/mlir-opt \
 
 ### Step 3: Translate to LLVM IR
 
-Use `mlir-translate` to convert the LLVM dialect MLIR into standard LLVM IR (`.ll` file).
+Use `mlir-translate` to convert the LLVM dialect MLIR into standard LLVM IR.
 
 ```bash
 path/to/mlir-translate \

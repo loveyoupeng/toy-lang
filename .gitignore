@@ -11,3 +11,4 @@ lib/
 out/
 _deps/
 compile_commands.json
+.cache/

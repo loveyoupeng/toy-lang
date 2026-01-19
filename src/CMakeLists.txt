@@ -6,7 +6,13 @@ set(LLVM_LINK_COMPONENTS
   Analysis
   ExecutionEngine
   OrcJIT
+  X86CodeGen
+  X86AsmParser
+  X86Desc
+  X86Info
 )
+
+llvm_map_components_to_libnames(llvm_libs ${LLVM_LINK_COMPONENTS})
 
 add_library(toy_compiler
   frontend/Lexer.cpp
@@ -24,9 +30,15 @@ target_link_libraries(toy_compiler PUBLIC
   MLIRFuncDialect
   MLIRLLVMDialect
   MLIRTransforms
+  MLIRPass
+  MLIRArithToLLVM
+  MLIRFuncToLLVM
+  MLIRReconcileUnrealizedCasts
+  MLIRTargetLLVMIRExport
   MLIRBuiltinToLLVMIRTranslation
   MLIRLLVMToLLVMIRTranslation
+  ${llvm_libs}
 )
 
 add_executable(toy-lang main.cpp)
-target_link_libraries(toy-lang PRIVATE toy_compiler)
+target_link_libraries(toy-lang PRIVATE toy_compiler ${llvm_libs})

@@ -12,3 +12,4 @@ out/
 _deps/
 compile_commands.json
 .cache/
+*.log

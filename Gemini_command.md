@@ -283,3 +283,31 @@ Verification:
 - Confirmed no hangs on malformed input via timeout tests.
 
 ---
+
+## Commit: f3035b76b92bd14da125d4a87b845f9a15a8be7c
+
+**Date:** Tue Jan 20 01:25:59 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+feat: add clang-tidy check to pre-commit hook and fix issues
+
+What I've done:
+
+- Integrated clang-tidy into the pre-commit hook.
+- Added .clang-tidy configuration file with project-specific rules.
+- Fixed several clang-tidy issues in main.cpp, MLIRGen.cpp, and Parser.cpp:
+  - Combined identical branches in getMLIRType.
+  - Removed else-after-return in emitCast.
+  - Added default case to switch in codegen and parseType.
+  - Initialized variables.
+  - Used qualified-auto and emplace_back.
+  - Properly handled unused return values.
+- Re-enabled googletest in CMakeLists.txt to ensure tests are included in linting.
+
+Verification:
+
+- Ran clang-tidy on all source and test files and verified they pass with the new configuration.
+- Verified the pre-commit hook runs clang-tidy correctly.
+
+---

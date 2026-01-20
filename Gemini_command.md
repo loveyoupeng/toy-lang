@@ -335,3 +335,22 @@ Verification:
 - Pre-commit hooks passed successfully.
 
 ---
+
+## Commit: bdc2014ae5a4fae257840f20d06af16c97b41441
+
+**Date:** Wed Jan 21 00:16:07 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+fix: remove unused include <sstream> in Parser.cpp
+
+What I've done:
+
+- Removed unused <sstream> header from src/frontend/Parser.cpp to resolve clangd warning.
+
+Verification:
+
+- Project builds cleanly.
+- Pre-commit hooks passed.
+
+---

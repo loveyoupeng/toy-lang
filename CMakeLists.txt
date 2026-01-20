@@ -45,6 +45,16 @@ include_directories(${MLIR_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
+# --- Compiler Settings ---
+if(MSVC)
+  add_compile_options(/W4 /WX /wd4100)
+else()
+  add_compile_options(-Wall -Wextra -Werror -Wno-unused-parameter)
+endif()
+
+add_definitions(-D_SILENCE_NONFLOATING_COMPLEX_DEPRECATION_WARNING)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
 # --- Subdirectories ---
 add_subdirectory(src)
 add_subdirectory(tests)

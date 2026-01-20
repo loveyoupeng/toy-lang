@@ -389,7 +389,7 @@ class MLIRGenImpl {
       auto mlirLoc = getLoc(loc);
 
       for (auto& arg : printExpr->getArgs()) {
-        if (auto* strArg = dynamic_cast<StringExprAST*>(arg.get())) {
+        if (dynamic_cast<StringExprAST*>(arg.get())) {
           auto val = codegen(*arg);
           builder.create<mlir::LLVM::CallOp>(mlirLoc, printfFunc, val);
         } else {

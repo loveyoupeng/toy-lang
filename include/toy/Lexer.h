@@ -66,7 +66,7 @@ class Lexer {
   int curCol = 0;
   Location lastLoc = {1, 0};
   const std::string source;
-  int curPos = 0;
+  size_t curPos = 0;
 
   char nextChar() {
     if (curPos >= source.size()) return EOF;

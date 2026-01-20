@@ -311,3 +311,27 @@ Verification:
 - Verified the pre-commit hook runs clang-tidy correctly.
 
 ---
+
+## Commit: a6d31041fecbf4952280ead7cd4c98d057d784ec
+
+**Date:** Tue Jan 20 23:54:18 2026 +0800
+**Author:** loveyoupeng
+
+**Message:**
+fix: resolve compiler warnings and improve pre-commit hooks
+
+What I've done:
+
+- Fixed signed/unsigned comparison warning in Lexer.h.
+- Suppressed third-party library warnings in CMakeLists.txt using _SILENCE_NONFLOATING_COMPLEX_DEPRECATION_WARNING and_CRT_SECURE_NO_WARNINGS.
+- Added -Wno-unused-parameter and /wd4100 to suppress unavoidable warnings from external headers.
+- Fixed 'unused-but-set-variable' warning in MLIRGen.cpp.
+- Improved pre-commit hook to catch clang-tidy failures more reliably using a loop.
+- Fixed markdownlint issues in docs/compilation.md (applied via pre-commit hook).
+
+Verification:
+
+- Project builds cleanly with -Wall -Wextra -Werror.
+- Pre-commit hooks passed successfully.
+
+---
